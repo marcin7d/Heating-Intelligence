@@ -1,4 +1,4 @@
-"""Collect boiler entities and a nine-zone mapping."""
+"""Collect boiler entities and a variable-size zone mapping."""
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers.selector import EntitySelector, EntitySelectorConfig
@@ -15,9 +15,11 @@ class HeatingFlow(config_entries.ConfigFlow, domain="heating_intelligence"):
         errors = {}
         if user_input is not None:
             zones = user_input["zones"]
-            if len(set(zones)) != 9:
-                errors["zones"] = "nine_zones"
-            elif len({user_input[key] for key in ("outdoor", "supply", "return", "boiler", "mixed") if key in user_input}) != len(user_input) - 1:
+            if not zones:
+                errors["zones"] = "at_least_one_zone"
+            elif len(set(zones)) != len(zones):
+                errors["zones"] = "duplicate_zones"
+            elif len({user_input[key] for key in ("outdoor", "supply", "return", "boiler", "mixed") if key in user_input}) != len([key for key in ("outdoor", "supply", "return", "boiler", "mixed") if key in user_input]):
                 errors["base"] = "duplicate_sources"
             else:
                 self.sources = user_input
