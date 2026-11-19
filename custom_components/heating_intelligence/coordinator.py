@@ -86,7 +86,8 @@ def compute(config, histories, live, now, midnight, trained_models, training, sa
     sun_id = 'sun.sun'
     if sun_id not in ids:
         ids.append(sun_id)
-    events = {key: sorted([(int(s.last_updated.timestamp()), s) for s in histories.get(key, [])]) for key in ids}
+    events = {key: sorted(((int(s.last_updated.timestamp()), s) for s in histories.get(key, [])),
+                          key=lambda item: item[0]) for key in ids}
     positions = dict.fromkeys(ids, 0)
     current = {}
     kinds = {zone: 'floor' if zone in config.get('floor', ()) else 'radiator' for zone in config['zones']}
