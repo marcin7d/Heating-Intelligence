@@ -4,7 +4,7 @@
       "user": {
         "title": "Heating Intelligence",
         "data": {
-          "zones": "Nine thermostats",
+          "zones": "Thermostats (one or more)",
           "outdoor": "Outdoor temperature",
           "supply": "Boiler supply",
           "return": "Boiler return",
@@ -21,7 +21,8 @@
       }
     },
     "error": {
-      "nine_zones": "Select nine distinct thermostats.",
+      "at_least_one_zone": "Select at least one thermostat.",
+      "duplicate_zones": "Select each thermostat only once.",
       "duplicate_sources": "Select distinct source entities.",
       "floor_subset": "Choose entities from the previous step."
     },
