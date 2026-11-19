@@ -103,8 +103,32 @@ class SolarTests(unittest.TestCase):
         rows = self.make_rows(False)
         model, _, _ = m.train(rows, 'radiator')
         future, lead = m.forecast(model, rows[-144:], 5, 1, None, 21, 1)
-        self.assertEqual(set(future), set(m.HORIZONS))
+        self.assertEqual(set(future), set(model.qualified_horizons))
 
 
 if __name__ == '__main__':
     unittest.main()
+
+class HorizonValidationTests(unittest.TestCase):
+    def test_metrics_and_qualified_horizons(self):
+        rows = SolarTests.make_rows(False)
+        model, status, info = m.train_with_diagnostics(rows, 'radiator')
+        self.assertIsNotNone(model)
+        self.assertTrue(set(model.qualified_horizons) & {30, 60, 120})
+        self.assertIn('60', info['horizon_mae'])
+        self.assertIn('60', info['horizon_baseline'])
+
+    def test_no_temperature_variation_stays_rejected(self):
+        rows = [(i * m.STEP, 21.0, 5.0, float(i % 80 < 40), None)
+                for i in range(900)]
+        model, status, info = m.train_with_diagnostics(rows, 'radiator')
+        self.assertIsNone(model)
+        self.assertEqual(status, 'no_temperature_variation')
+
+    def test_only_qualified_forecasts_are_exposed(self):
+        rows = SolarTests.make_rows(False)
+        model, _, _ = m.train_with_diagnostics(rows, 'radiator')
+        self.assertIsNotNone(model)
+        model.qualified_horizons = (60,)
+        predictions, _ = m.forecast(model, rows[-144:], 5, 1, None, 21, 1)
+        self.assertEqual(set(predictions), {60})

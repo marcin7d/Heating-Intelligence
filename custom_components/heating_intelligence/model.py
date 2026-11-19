@@ -1,5 +1,5 @@
 """Small, bounded models for demand and thermal response; no HA dependency."""
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from datetime import datetime
 from math import cos, radians, isfinite
 from statistics import mean
@@ -71,6 +71,9 @@ class Model:
     baseline: float
     samples: int
     uses_solar: bool = False
+    qualified_horizons: tuple = ()
+    horizon_mae: dict = field(default_factory=dict)
+    horizon_baseline: dict = field(default_factory=dict)
 
 
 def _samples(rows, memory, with_solar):
@@ -122,6 +125,48 @@ def _fit_linear(pairs, with_solar):
     return coef, bias, error, baseline
 
 
+
+def validate_horizons(rows, model):
+    """Evaluate 30/60/120/360-minute rollouts on chronological holdout data.
+
+    Only the inputs at the forecast origin are used in each rollout, matching
+    live forecasting. No future weather, heating or room data leaks into it.
+    """
+    split = int(len(rows) * .8)
+    result = {}
+    for horizon in HORIZONS:
+        steps = horizon // 5
+        errors, baselines = [], []
+        for i in range(max(split, 48), len(rows) - steps, 6):
+            origin, future = rows[i], rows[i + steps]
+            recent = rows[i - 48:i + 1]
+            if future[0] - origin[0] != steps * STEP:
+                continue
+            if None in (origin[1], origin[2], origin[3], future[1]):
+                continue
+            if model.uses_solar and origin[4] is None:
+                continue
+            if any(r[3] is None for r in recent):
+                continue
+            if any(b[0] - a[0] != STEP for a, b in zip(recent, recent[1:])):
+                continue
+            mass = 0.
+            for r in recent[:-1]:
+                mass = model.memory * mass + (1 - model.memory) * r[3]
+            temperature = origin[1]
+            for _ in range(steps):
+                mass = model.memory * mass + (1 - model.memory) * origin[3]
+                temperature += (model.loss * (origin[2] - temperature)
+                                + model.gain * mass
+                                + model.solar_gain * (origin[4] or 0)
+                                + model.bias)
+            errors.append(abs(temperature - future[1]))
+            baselines.append(abs(origin[1] - future[1]))
+        if len(errors) >= 8:
+            result[horizon] = (mean(errors), mean(baselines))
+    return result
+
+
 def train_with_diagnostics(rows, kind):
     """Return candidate, explanation and source/sample quality metrics.
 
@@ -146,11 +191,15 @@ def train_with_diagnostics(rows, kind):
         'training_idle_pairs': 0,
         'candidate_mae': None,
         'persistence_mae': None,
+        'horizon_mae': {},
+        'horizon_baseline': {},
+        'qualified_horizons': [],
     }
     if len(rows) < 220:
         return None, 'insufficient_history', info
     memories = (.8, .9, .95, .975) if kind == 'floor' else (0, .5, .75)
     candidates = []
+    best_attempt = None
     had_balanced_pairs = False
     for memory in memories:
         for use_solar in (False, True):
@@ -174,10 +223,28 @@ def train_with_diagnostics(rows, kind):
             if info['candidate_mae'] is None or error < info['candidate_mae']:
                 info['candidate_mae'] = round(error, 5)
                 info['persistence_mae'] = round(baseline, 5)
-            if coefficients[1] > 0 and error < baseline:
-                candidates.append(Model(memory, coefficients[0], coefficients[1],
-                                        coefficients[2], bias, error, baseline,
-                                        len(pairs), use_solar))
+            if coefficients[1] <= 0:
+                continue
+            model = Model(memory, coefficients[0], coefficients[1],
+                          coefficients[2], bias, error, baseline,
+                          len(pairs), use_solar)
+            scores = validate_horizons(rows, model)
+            model.horizon_mae = {str(h): round(a, 5) for h, (a, b) in scores.items()}
+            model.horizon_baseline = {str(h): round(b, 5) for h, (a, b) in scores.items()}
+            model.qualified_horizons = tuple(h for h, (a, b) in scores.items()
+                                             if b > 0 and a < b)
+            important = [h for h in (30, 60, 120) if h in model.qualified_horizons]
+            improvement = sum(1 - scores[h][0] / scores[h][1] for h in important)
+            score = (len(important), improvement, -error)
+            if best_attempt is None or score > best_attempt[0]:
+                best_attempt = (score, model)
+            if important:
+                candidates.append((score, model))
+    if best_attempt:
+        attempt = best_attempt[1]
+        info.update(horizon_mae=attempt.horizon_mae,
+                    horizon_baseline=attempt.horizon_baseline,
+                    qualified_horizons=list(attempt.qualified_horizons))
     if not candidates:
         if info['usable_pairs'] < 190:
             status = 'insufficient_valid_samples'
@@ -192,16 +259,21 @@ def train_with_diagnostics(rows, kind):
         else:
             status = 'validation_failed'
         return None, status, info
-    base = min((m for m in candidates if not m.uses_solar),
-               key=lambda m: m.error, default=None)
-    solar = min((m for m in candidates if m.uses_solar),
-                key=lambda m: m.error, default=None)
-    if solar and (not base or solar.error < .97 * base.error):
-        return solar, 'ready_solar', info
-    if base:
-        return base, 'ready', info
+    base = max((x for x in candidates if not x[1].uses_solar),
+               key=lambda x: x[0], default=None)
+    solar = max((x for x in candidates if x[1].uses_solar),
+                key=lambda x: x[0], default=None)
+    chosen = base
+    if solar and (base is None or solar[0][0] > base[0][0] or
+                  (solar[0][0] == base[0][0] and solar[0][1] > base[0][1] * 1.03)):
+        chosen = solar
+    if chosen:
+        model = chosen[1]
+        info.update(horizon_mae=model.horizon_mae,
+                    horizon_baseline=model.horizon_baseline,
+                    qualified_horizons=list(model.qualified_horizons))
+        return model, 'ready_solar' if model.uses_solar else 'ready', info
     return None, 'validation_failed', info
-
 
 def train(rows, kind):
     """Backward-compatible training interface for existing callers/tests."""
@@ -215,16 +287,14 @@ def forecast(model, rows, outside, heat_input, solar_now, target, active_heat):
     if model.uses_solar and solar_now is None:
         return {}, None
     energy = 0.0
-    last_time = rows[-1][0]
-    consecutive = 0
-    for stamp, _, _, historical_heat, _ in reversed(rows[:-1]):
-        if stamp != last_time - STEP or historical_heat is None:
-            break
-        energy = model.memory * energy + (1 - model.memory) * historical_heat
-        consecutive += 1
-        last_time = stamp
-    if model.memory and consecutive < 12:
+    recent = rows[-49:-1]
+    if model.memory and (len(recent) < 12 or
+                         any(r[3] is None for r in recent) or
+                         any(b[0] - a[0] != STEP for a, b in zip(recent, recent[1:]))):
         return {}, None
+    for _, _, _, old_heat, _ in recent:
+        if old_heat is not None:
+            energy = model.memory * energy + (1 - model.memory) * old_heat
 
     def simulate(power):
         room, mass = rows[-1][1], energy
@@ -234,9 +304,11 @@ def forecast(model, rows, outside, heat_input, solar_now, target, active_heat):
                      + model.solar_gain * (solar_now or 0) + model.bias)
             yield minutes, room
 
-    predicted = {mins: round(value, 2) for mins, value in simulate(heat_input) if mins in HORIZONS}
+    qualified = set(model.qualified_horizons)
+    predicted = {mins: round(value, 2) for mins, value in simulate(heat_input)
+                 if mins in qualified}
     lead = None
-    if target is not None:
+    if target is not None and 120 in qualified:
         if rows[-1][1] >= target - .1:
             lead = 0
         elif active_heat is not None and active_heat > 0:

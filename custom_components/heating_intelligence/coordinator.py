@@ -211,6 +211,9 @@ def compute(config, histories, live, now, midnight, trained_models, training, sa
             'model_temperature_changes': diag.get('temperature_changes'),
             'model_candidate_mae': diag.get('candidate_mae'),
             'model_persistence_mae': diag.get('persistence_mae'),
+            'model_horizons': ', '.join(str(h) for h in (model.qualified_horizons if model else diag.get('qualified_horizons', []))) or 'none',
+            **{f'model_mae_{h}': (model.horizon_mae if model else diag.get('horizon_mae', {})).get(str(h)) for h in HORIZONS},
+            **{f'model_baseline_{h}': (model.horizon_baseline if model else diag.get('horizon_baseline', {})).get(str(h)) for h in HORIZONS},
             'model_error': round(model.error, 4) if model else None,
             'model_memory': model.memory if model else None,
             'solar_gain_index': solar,
@@ -278,7 +281,8 @@ class HeatingCoordinator(DataUpdateCoordinator):
         midnight = int(local_midnight.timestamp())
         # Retrain hourly until *every* configured zone has a model.
         training = now - self.last_training >= (
-            86400 if all(zone in self.models for zone in self.config['zones']) else 3600)
+            86400 if all(zone in self.models and self.models[zone].qualified_horizons
+                         for zone in self.config['zones']) else 3600)
         kitchen_entities = [profile[key] for profile in self.config.get('profiles', {}).values()
                             if profile.get('type') == 'kitchen'
                             for key in ('oven_power', 'hob_power', 'hood', 'kitchen_humidity')
@@ -311,6 +315,9 @@ class HeatingCoordinator(DataUpdateCoordinator):
                     'persistence_mae')},
                 'training_heating_pairs': values['model_heating_samples'],
                 'training_idle_pairs': values['model_idle_samples'],
+                'horizon_mae': {str(h): values[f'model_mae_{h}'] for h in HORIZONS if values[f'model_mae_{h}'] is not None},
+                'horizon_baseline': {str(h): values[f'model_baseline_{h}'] for h in HORIZONS if values[f'model_baseline_{h}'] is not None},
+                'qualified_horizons': [int(h) for h in values['model_horizons'].split(', ') if h.isdigit()],
                 'kitchen_excluded_samples': values['kitchen_excluded_samples'],
                 'kitchen_heat_events': values['kitchen_heat_events'],
             } for zone, values in data['zones'].items()}
