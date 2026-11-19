@@ -1,4 +1,4 @@
-# Heating Intelligence 0.2.0 — unpublished development draft
+# Heating Intelligence 0.2.1 — unpublished development draft
 
 Read-only Home Assistant 2026.11 custom integration. Supports any positive number of climate zones, radiator and underfloor heating, boiler supply and return temperature, optional mixed-floor supply and three **optional** solar signal sources: irradiance W/m², illuminance lux and PV power W. Configure window orientation and approximate shading independently for each zone.
 
@@ -18,8 +18,12 @@ While cooking heat is detected or in cooldown, kitchen temperature forecasts and
 
 **Limitations:** The system identifies disturbances; it does not measure actual cooking heat or predict when someone will cook. Extractor activity may be ventilation without cooking. Slow internal gains may be missed. Temperature-only detection requires valid low-sunlight and low-heating evidence. Thresholds are experimental and should be validated in an actual installation. Changing the profile of an existing configured installation currently requires removing and re-adding the integration; back up first. No changes are published to GitHub in this draft.
 
-## Missing forecast diagnostics — unpublished 0.2.0 draft
+## Missing forecast diagnostics — unpublished 0.2.1 draft
 
 Each configured zone reports **Model training status**, **Model valid history rows**, **Model missing room/outdoor/heat rows**, **Model heating samples**, **Model idle samples**, **Model temperature changes**, **Model candidate validation MAE**, **Model constant-temperature baseline MAE**, and **Last model training attempt (Unix UTC)**. Statuses distinguish `insufficient_valid_samples`, `insufficient_heating_samples`, `insufficient_idle_samples`, `no_temperature_variation`, and `validation_failed`. Training retries hourly until every configured zone has an accepted model. Models are not forced through validation.
 
 This is an unpublished draft with unit tests only, not a validated installation on a production Home Assistant instance. Back up the installation before replacing the files. Existing config entries do not automatically gain new config-flow options.
+
+## Upgrade from 0.1.1
+
+Version 0.2.1 migrates version-1 config entries to version 2 without removing selected zones or sensor sources. Old model coefficients are incompatible with the new model and are retrained. Existing entries do not yet expose the new solar/kitchen setup through an options flow. Restart Home Assistant Core after updating.

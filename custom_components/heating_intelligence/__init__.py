@@ -4,6 +4,20 @@ from .coordinator import HeatingCoordinator
 
 PLATFORMS = [Platform.SENSOR]
 
+
+async def async_migrate_entry(hass, entry):
+    """Upgrade existing 0.1.x config entries without deleting user-selected zones.
+
+    The 0.2.x coordinator handles missing optional sources and zone profiles.
+    """
+    if entry.version == 1:
+        data = dict(entry.data)
+        data.setdefault("orientations", {})
+        data.setdefault("profiles", {})
+        hass.config_entries.async_update_entry(entry, data=data, version=2)
+        return True
+    return entry.version == 2
+
 async def async_setup_entry(hass, entry):
     coordinator = HeatingCoordinator(hass, entry)
     entry.runtime_data = coordinator

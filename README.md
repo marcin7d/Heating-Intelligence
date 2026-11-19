@@ -1,6 +1,6 @@
-# Heating Intelligence 0.2.0 — wersja robocza
+# Heating Intelligence 0.2.1 — wersja robocza
 
-**NIEOPUBLIKOWANA.** Rozwojowa wersja integracji Home Assistant 2026.11 — wyłącznie monitorowanie i predykcja. Nie wykonuje żadnych komend do kotła, mieszacza ani termostatów.
+**WERSJA ROZWOJOWA.** Rozwojowa wersja integracji Home Assistant 2026.11 — wyłącznie monitorowanie i predykcja. Nie wykonuje żadnych komend do kotła, mieszacza ani termostatów.
 
 ## Konfigurator
 
@@ -33,7 +33,7 @@ python -m unittest discover -s tests -v
 
 Testy jednostkowe nie są równoznaczne z testem integracyjnym na działającym Home Assistant 2026.11. Dodatkowo nadal potrzebna będzie walidacja prognoz 60/360 min w warunkach rzeczywistych.
 
-## Nowy profil: **Kuchnia** (0.2.0 — nadal robocza)
+## Nowy profil: **Kuchnia** (0.2.1 — nadal robocza)
 
 Podczas konfiguracji każdej strefy wybierz **Room profile → kitchen / Kuchnia**. Profil pomieszczenia jest **niezależny** od typu obiegu (grzejniki/podłogówka). Pozostałe pomieszczenia mają profil `standard`.
 
@@ -58,9 +58,9 @@ Nowe encje dla stref:
 
 **Ograniczenia:** to detektor przeszkadzających zysków wewnętrznych, nie pomiar mocy cieplnej gotowania ani prognoza tego, kiedy domownicy będą gotowali. Niewielkie, wolno zmieniające się zyski mogą pozostać niewykryte. Bez dodatkowych czujników i bez dostępnego wskaźnika słońca wykrywanie jest ograniczone. Zamknięcie okapu nie oznacza, że ciepło już zniknęło. Progi są eksperymentalne i wymagają weryfikacji na danych rzeczywistych.
 
-**Uwaga dotycząca aktualizacji:** dla istniejącej konfiguracji 0.2.0 konfigurator nie obsługuje jeszcze edycji profili przez opcje integracji. Przed testowaniem profilu Kuchnia zapisz kopię konfiguracji i dodaj integrację od nowa. Nie zalecam podmieniania produkcyjnej 0.1.1 bez kopii zapasowej.
+**Uwaga dotycząca aktualizacji:** dla istniejącej konfiguracji 0.2.1 konfigurator nie obsługuje jeszcze edycji profili przez opcje integracji. Przed testowaniem profilu Kuchnia zapisz kopię konfiguracji i dodaj integrację od nowa. Nie zalecam podmieniania produkcyjnej 0.1.1 bez kopii zapasowej.
 
-## Diagnostyka braku prognoz — robocze 0.2.0
+## Diagnostyka braku prognoz — robocze 0.2.1
 
 Po uruchomieniu treningu w encjach każdego pomieszczenia dostępne są:
 
@@ -74,4 +74,8 @@ Po uruchomieniu treningu w encjach każdego pomieszczenia dostępne są:
 
 Trening ponawia się co godzinę, dopóki choć jedna skonfigurowana strefa nie ma modelu. Po zaakceptowaniu modeli dla wszystkich stref następuje co 24 godziny. Samo `Recorder history = available` nie oznacza, że wszystkie strefy mają kompletną historię.
 
-**Uwaga:** ta paczka jest wersją roboczą, niepublikowaną. Testy jednostkowe nie zastępują sprawdzenia na prawdziwym Home Assistant; przed podmianą plików wykonaj kopię zapasową konfiguracji. Aktualizacja istniejącej integracji nie dodaje automatycznie nowych opcji konfiguratora (np. profilu kuchni), jeśli integracja była skonfigurowana wcześniej.
+**Uwaga:** jest to wersja rozwojowa. Testy jednostkowe nie zastępują sprawdzenia na prawdziwym Home Assistant; przed podmianą plików wykonaj kopię zapasową konfiguracji. Aktualizacja istniejącej integracji nie dodaje automatycznie nowych opcji konfiguratora (np. profilu kuchni), jeśli integracja była skonfigurowana wcześniej.
+
+## Migracja z 0.1.1
+
+W 0.2.1 dodano migrację wpisu konfiguracji z wersji 1 do 2, zachowując wybrane termostaty i źródła pomiarowe. Stare współczynniki zapisanych modeli są niezgodne z 0.2.x, więc zostają wyzerowane i wyuczone ponownie. Nowe opcje słońca i profilu Kuchnia dla istniejącego wpisu nie są ustawiane automatycznie; do ich edycji potrzebny będzie osobny mechanizm opcji. Po aktualizacji przez Marketplace/HACS uruchom ponownie Home Assistant Core.

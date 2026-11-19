@@ -1,9 +1,12 @@
 {
   "domain": "heating_intelligence",
   "name": "Heating Intelligence",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "config_flow": true,
-  "dependencies": ["recorder", "sun"],
+  "dependencies": [
+    "recorder",
+    "sun"
+  ],
   "documentation": "https://github.com/marcin7d/Heating-Intelligence",
   "integration_type": "hub",
   "iot_class": "local_polling",

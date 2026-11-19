@@ -230,13 +230,31 @@ def compute(config, histories, live, now, midnight, trained_models, training, sa
     return result, trained_models
 
 
+class HeatingModelStore(Store):
+    """Discard incompatible 0.1.x model coefficients while preserving config entries.
+
+    Previously saved models have no solar_gain/uses_solar coefficients. They
+    must be relearned with the 0.2.x data features rather than reinterpreted.
+    """
+
+    async def _async_migrate_func(self, old_major_version, old_minor_version, old_data):
+        if old_major_version == 1:
+            return {
+                'config': old_data.get('config'),
+                'models': {},
+                'last_training': 0,
+                'diagnostics': {},
+            }
+        raise NotImplementedError(f'Unsupported model storage version {old_major_version}')
+
+
 class HeatingCoordinator(DataUpdateCoordinator):
     def __init__(self, hass, entry):
         super().__init__(hass, _LOGGER, config_entry=entry, name='heating_intelligence',
                          update_interval=timedelta(minutes=5))
         self.entry = entry
         self.config = dict(entry.data)
-        self.store = Store(hass, 2, f'heating_intelligence.{entry.entry_id}')
+        self.store = HeatingModelStore(hass, 2, f'heating_intelligence.{entry.entry_id}')
         self.models = {}
         self.last_training = 0
         self.saved_diagnostics = {}
