@@ -1,0 +1,12 @@
+{
+  "domain": "heating_intelligence",
+  "name": "Heating Intelligence",
+  "version": "0.1.0",
+  "config_flow": true,
+  "dependencies": ["recorder"],
+  "documentation": "https://www.home-assistant.io/integrations/recorder/",
+  "integration_type": "hub",
+  "iot_class": "local_polling",
+  "requirements": [],
+  "codeowners": []
+}
