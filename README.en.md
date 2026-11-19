@@ -1,12 +1,12 @@
-# Heating Intelligence 0.1.0
+# Heating Intelligence 0.1.1
 
 [Polish documentation](README.md)
 
-Read-only Home Assistant Core 2026.11 integration for nine heating zones. It learns how each room responds and exposes forecasts and boiler advice. Existing heating controls operate independently.
+Read-only Home Assistant Core 2026.11 integration for any positive number of heating zones. It learns how each room responds and exposes forecasts and boiler advice. Existing heating controls operate independently.
 
 ## Installation
 
-Extract the ZIP and copy `custom_components/heating_intelligence` into Home Assistant's `/config/custom_components/`. Restart Home Assistant and choose **Settings → Devices & services → Add integration → Heating Intelligence**. Select nine distinct climate entities, outdoor temperature, boiler supply and return temperature, boiler activity, and optionally mixed floor supply temperature. Select floor zones in the second step. Remaining zones are treated as radiators.
+Extract the ZIP and copy `custom_components/heating_intelligence` into Home Assistant's `/config/custom_components/`. Restart Home Assistant and choose **Settings → Devices & services → Add integration → Heating Intelligence**. Select one or more distinct climate entities, outdoor temperature, boiler supply and return temperature, boiler activity, and optionally mixed floor supply temperature. Select floor zones in the second step. Remaining zones are treated as radiators.
 
 You can also add this public repository through Home Assistant Marketplace: https://github.com/marcin7d/Heating-Intelligence .
 
