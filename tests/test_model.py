@@ -132,3 +132,30 @@ class HorizonValidationTests(unittest.TestCase):
         model.qualified_horizons = (60,)
         predictions, _ = m.forecast(model, rows[-144:], 5, 1, None, 21, 1)
         self.assertEqual(set(predictions), {60})
+
+class ResidualHeatTests(unittest.TestCase):
+    def test_boiler_off_has_no_new_delivered_heat(self):
+        self.assertEqual(m.heating_proxy('radiator', True, False, 20, 60, None), 0)
+        self.assertEqual(m.heating_proxy('radiator', False, True, 20, 60, None), 0)
+
+    def test_unknown_boiler_is_not_assumed_on(self):
+        self.assertIsNone(m.heating_proxy('radiator', True, None, 20, 60, None))
+
+    def test_stored_radiator_heat_decays_after_shutdown(self):
+        # A radiator heated for 1 hour continues emitting stored heat after
+        # the pump stops, while the direct input drops to zero.
+        memory = .95
+        stored = 0.
+        for _ in range(12):
+            stored = memory * stored + (1 - memory) * 1.
+        at_shutdown = stored
+        stored = memory * stored
+        self.assertGreater(stored, 0)
+        self.assertLess(stored, at_shutdown)
+
+    def test_heating_gain_diagnostic_exposed(self):
+        rows = SolarTests.make_rows(False)
+        _, _, info = m.train_with_diagnostics(rows, 'radiator')
+        self.assertIn('candidate_heating_gain', info)
+        self.assertIn('zero_gain_candidates', info)
+        self.assertIn('evaluated_candidates', info)

@@ -194,10 +194,15 @@ def train_with_diagnostics(rows, kind):
         'horizon_mae': {},
         'horizon_baseline': {},
         'qualified_horizons': [],
+        'candidate_heating_gain': None,
+        'zero_gain_candidates': 0,
+        'evaluated_candidates': 0,
     }
     if len(rows) < 220:
         return None, 'insufficient_history', info
-    memories = (.8, .9, .95, .975) if kind == 'floor' else (0, .5, .75)
+    # Radiators retain heat after the boiler/pump stops; room temperature
+    # responds to stored emitter heat, not directly to thermostat demand.
+    memories = (.8, .9, .95, .975, .99) if kind == 'floor' else (.5, .75, .9, .95, .975)
     candidates = []
     best_attempt = None
     had_balanced_pairs = False
@@ -223,8 +228,12 @@ def train_with_diagnostics(rows, kind):
             if info['candidate_mae'] is None or error < info['candidate_mae']:
                 info['candidate_mae'] = round(error, 5)
                 info['persistence_mae'] = round(baseline, 5)
+            if info['candidate_heating_gain'] is None or coefficients[1] > info['candidate_heating_gain']:
+                info['candidate_heating_gain'] = round(coefficients[1], 7)
             if coefficients[1] <= 0:
+                info['zero_gain_candidates'] += 1
                 continue
+            info['evaluated_candidates'] += 1
             model = Model(memory, coefficients[0], coefficients[1],
                           coefficients[2], bias, error, baseline,
                           len(pairs), use_solar)
@@ -256,6 +265,8 @@ def train_with_diagnostics(rows, kind):
             status = 'no_temperature_variation'
         elif not had_balanced_pairs:
             status = 'missing_heating_cycles'
+        elif info['evaluated_candidates'] == 0:
+            status = 'heating_gain_not_identified'
         else:
             status = 'validation_failed'
         return None, status, info
@@ -321,8 +332,13 @@ def heating_proxy(kind, request, boiler, room, supply, mixed):
         return 0.0
     if request is None or room is None:
         return None
+    # OFF means both burner and circulation pump are stopped in this system.
+    # Do not mistake a still-hot supply pipe for delivered heating power.
+    # Residual radiator heat is represented by the learned memory state.
     if boiler is False:
         return 0.0
+    if boiler is None:
+        return None
     water = mixed if kind == 'floor' else supply
     if water is None:
         return float(boiler) if boiler is not None and kind == 'floor' else None
