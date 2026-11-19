@@ -1,0 +1,45 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Heating Intelligence",
+        "data": {
+          "zones": "Heating zones",
+          "outdoor": "Outdoor temperature",
+          "supply": "Boiler supply temperature",
+          "return": "Boiler return temperature",
+          "boiler": "Boiler operation",
+          "mixed": "Mixed floor supply (optional)",
+          "irradiance": "Solar irradiance W/m² (optional)",
+          "illuminance": "Illuminance lux (optional)",
+          "pv_power": "PV power W (optional)"
+        }
+      },
+      "floor": {
+        "title": "Select floor heating zones",
+        "data": {
+          "floor": "Underfloor heating zones"
+        }
+      },
+      "orientation": {
+        "title": "Window orientation: {zone}",
+        "description": "Choose Standard or Kitchen; optional kitchen device and humidity sensors improve internal heat gain detection.",
+        "data": {
+          "room_profile": "Room profile",
+          "windows": "Window directions",
+          "shading": "Shading (%)",
+          "oven_power": "Oven power W (optional for Kitchen)",
+          "hob_power": "Hob power W (optional for Kitchen)",
+          "hood": "Extractor hood (optional for Kitchen)",
+          "kitchen_humidity": "Kitchen humidity % (optional for Kitchen)"
+        }
+      }
+    },
+    "error": {
+      "invalid_zones": "Select at least one unique climate entity."
+    },
+    "abort": {
+      "already_configured": "Already configured."
+    }
+  }
+}

@@ -4,45 +4,42 @@
       "user": {
         "title": "Heating Intelligence",
         "data": {
-          "zones": "Thermostats (one or more)",
+          "zones": "Heating zones",
           "outdoor": "Outdoor temperature",
-          "supply": "Boiler supply",
-          "return": "Boiler return",
-          "boiler": "Burner activity or heating request",
-          "mixed": "Mixed floor supply"
+          "supply": "Boiler supply temperature",
+          "return": "Boiler return temperature",
+          "boiler": "Boiler operation",
+          "mixed": "Mixed floor supply (optional)",
+          "irradiance": "Solar irradiance W/m² (optional)",
+          "illuminance": "Illuminance lux (optional)",
+          "pv_power": "PV power W (optional)"
         }
       },
       "floor": {
-        "title": "Assign heating circuits",
-        "description": "Select floor zones. Remaining zones are radiators.",
+        "title": "Select floor heating zones",
         "data": {
-          "floor": "Floor zones"
+          "floor": "Underfloor heating zones"
+        }
+      },
+      "orientation": {
+        "title": "Window orientation: {zone}",
+        "description": "Choose Standard or Kitchen. For Kitchen, optional appliances and humidity help detect non-heating gains; without them, only rapid warming with low heating/sunlight can trigger detection.",
+        "data": {
+          "room_profile": "Room profile",
+          "windows": "Window directions",
+          "shading": "Shading (%)",
+          "oven_power": "Oven power W (kitchen, optional)",
+          "hob_power": "Hob power W (kitchen, optional)",
+          "hood": "Extractor hood (kitchen, optional)",
+          "kitchen_humidity": "Kitchen humidity % (optional)"
         }
       }
     },
     "error": {
-      "at_least_one_zone": "Select at least one thermostat.",
-      "duplicate_zones": "Select each thermostat only once.",
-      "duplicate_sources": "Select distinct source entities.",
-      "floor_subset": "Choose entities from the previous step."
+      "invalid_zones": "Select at least one unique climate entity."
     },
     "abort": {
-      "already_configured": "Integration is already configured."
-    }
-  },
-  "entity": {
-    "sensor": {
-      "advice": {
-        "name": "Boiler advice",
-        "state": {
-          "insufficient_data": "Insufficient data",
-          "no_demand": "No demand",
-          "running": "Boiler running",
-          "consider_heat": "Consider heating",
-          "recent_start_low_demand": "Low demand after recent start",
-          "low_demand": "Low demand"
-        }
-      }
+      "already_configured": "Already configured."
     }
   }
 }

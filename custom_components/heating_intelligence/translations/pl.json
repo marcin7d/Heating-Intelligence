@@ -4,45 +4,42 @@
       "user": {
         "title": "Heating Intelligence",
         "data": {
-          "zones": "Termostaty (jeden lub więcej)",
+          "zones": "Termostaty (dowolna liczba)",
           "outdoor": "Temperatura zewnętrzna",
-          "supply": "Zasilanie przy kotle",
-          "return": "Powrót przy kotle",
-          "boiler": "Praca palnika lub żądanie CO",
-          "mixed": "Temperatura za mieszaczem"
+          "supply": "Zasilanie kotła",
+          "return": "Powrót kotła",
+          "boiler": "Stan pracy kotła",
+          "mixed": "Temperatura za mieszaczem (opcjonalnie)",
+          "irradiance": "Promieniowanie W/m² (opcjonalnie)",
+          "illuminance": "Oświetlenie lux (opcjonalnie)",
+          "pv_power": "Moc PV W (opcjonalnie)"
         }
       },
       "floor": {
-        "title": "Przypisanie obiegów",
-        "description": "Wybierz strefy podłogowe. Resztę przypiszemy do grzejników.",
+        "title": "Wybierz strefy podłogowe",
         "data": {
           "floor": "Strefy podłogowe"
+        }
+      },
+      "orientation": {
+        "title": "Okna w strefie: {zone}",
+        "description": "Wybierz profil Standard lub Kuchnia. Dla kuchni możesz podłączyć pomiary urządzeń i wilgotności; bez nich wykrywanie korzysta z nagłych wzrostów temperatury przy słabym ogrzewaniu i nasłonecznieniu.",
+        "data": {
+          "room_profile": "Profil pomieszczenia",
+          "windows": "Kierunki okien",
+          "shading": "Zacienienie (%)",
+          "oven_power": "Moc piekarnika W (kuchnia, opcjonalnie)",
+          "hob_power": "Moc płyty W (kuchnia, opcjonalnie)",
+          "hood": "Okap (kuchnia, opcjonalnie)",
+          "kitchen_humidity": "Wilgotność kuchni % (opcjonalnie)"
         }
       }
     },
     "error": {
-      "at_least_one_zone": "Wybierz co najmniej jeden termostat.",
-      "duplicate_zones": "Nie wybieraj tego samego termostatu wielokrotnie.",
-      "duplicate_sources": "Wybierz różne encje źródłowe.",
-      "floor_subset": "Wybierz encje z poprzedniego kroku."
+      "invalid_zones": "Wybierz co najmniej jeden unikalny termostat."
     },
     "abort": {
       "already_configured": "Integracja jest już skonfigurowana."
-    }
-  },
-  "entity": {
-    "sensor": {
-      "advice": {
-        "name": "Rekomendacja kotła",
-        "state": {
-          "insufficient_data": "Brak danych",
-          "no_demand": "Brak zapotrzebowania",
-          "running": "Kocioł pracuje",
-          "consider_heat": "Rozważ grzanie",
-          "recent_start_low_demand": "Małe zapotrzebowanie po niedawnym starcie",
-          "low_demand": "Małe zapotrzebowanie"
-        }
-      }
     }
   }
 }
