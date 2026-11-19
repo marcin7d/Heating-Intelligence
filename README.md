@@ -1,14 +1,14 @@
-# Heating Intelligence 0.1.0
+# Heating Intelligence 0.1.1
 
 [English documentation](README.en.md)
 
-Lokalna integracja odczytowa dla Home Assistant Core 2026.11. Uczy się reakcji dziewięciu stref grzewczych i pokazuje rekomendacje. Automatyka kotła, termostatów i mieszacza pracuje niezależnie od integracji.
+Lokalna integracja odczytowa dla Home Assistant Core 2026.11. Uczy się reakcji dowolnej liczby stref grzewczych i pokazuje rekomendacje. Automatyka kotła, termostatów i mieszacza pracuje niezależnie od integracji.
 
 ## Instalacja
 
 1. Skopiuj `custom_components/heating_intelligence` do `/config/custom_components/`, zrestartuj Home Assistant.
 2. **Ustawienia → Urządzenia i usługi → Dodaj integrację → Heating Intelligence**.
-3. Wybierz dziewięć różnych encji `climate`, temperaturę zewnętrzną, zasilanie i powrót przy kotle oraz sygnał pracy kotła. Temperaturę za mieszaczem możesz pominąć. W drugim kroku zaznacz strefy podłogowe. Pozostałe strefy będą grzejnikowe.
+3. Wybierz co najmniej jedną encję `climate` (bez sztywnego limitu liczby stref), temperaturę zewnętrzną, zasilanie i powrót przy kotle oraz sygnał pracy kotła. Temperaturę za mieszaczem możesz pominąć. W drugim kroku zaznacz strefy podłogowe. Pozostałe strefy będą grzejnikowe.
 
 ### Marketplace i HACS
 
