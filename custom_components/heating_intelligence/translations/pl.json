@@ -4,7 +4,7 @@
       "user": {
         "title": "Heating Intelligence",
         "data": {
-          "zones": "Dziewięć termostatów",
+          "zones": "Termostaty (jeden lub więcej)",
           "outdoor": "Temperatura zewnętrzna",
           "supply": "Zasilanie przy kotle",
           "return": "Powrót przy kotle",
@@ -21,7 +21,8 @@
       }
     },
     "error": {
-      "nine_zones": "Wybierz dziewięć różnych termostatów.",
+      "at_least_one_zone": "Wybierz co najmniej jeden termostat.",
+      "duplicate_zones": "Nie wybieraj tego samego termostatu wielokrotnie.",
       "duplicate_sources": "Wybierz różne encje źródłowe.",
       "floor_subset": "Wybierz encje z poprzedniego kroku."
     },
