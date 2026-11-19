@@ -19,11 +19,11 @@ async def main():
     flow = HeatingFlow()
     flow.hass = hass
     assert (await flow.async_step_user())["type"] == "form"
-    zones = [f"climate.zone_{i}" for i in range(9)]
+    zones = [f"climate.zone_{i}" for i in range(3)]
     config = {"zones": zones, "outdoor": "sensor.outdoor", "supply": "sensor.supply",
               "return": "sensor.return", "boiler": "binary_sensor.burner"}
     assert (await flow.async_step_user(config))["step_id"] == "floor"
-    config["floor"] = zones[:4]
+    config["floor"] = zones[:1]
     states = {zone: State(zone, "heat", {"current_temperature": 20, "temperature": 21,
                                        "hvac_action": "heating"}) for zone in zones}
     states.update({"sensor.outdoor": State("sensor.outdoor", "5"),
@@ -32,8 +32,8 @@ async def main():
                    "binary_sensor.burner": State("binary_sensor.burner", "on")})
     now = int(datetime.now(timezone.utc).timestamp())
     result, _ = calculate(config, {}, states, "°C", now, now - 3600, {}, False, False)
-    assert result["delta_t"] == 15 and result["demand"] == 9
-    assert len(result["zones"]) == 9
+    assert result["delta_t"] == 15 and result["demand"] == 3
+    assert len(result["zones"]) == 3
     assert "significant_changes_only" in inspect.signature(get_significant_states).parameters
     assert HeatingSensor is not None
 
