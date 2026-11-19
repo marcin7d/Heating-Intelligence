@@ -1,0 +1,47 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Heating Intelligence",
+        "data": {
+          "zones": "Nine thermostats",
+          "outdoor": "Outdoor temperature",
+          "supply": "Boiler supply",
+          "return": "Boiler return",
+          "boiler": "Burner activity or heating request",
+          "mixed": "Mixed floor supply"
+        }
+      },
+      "floor": {
+        "title": "Assign heating circuits",
+        "description": "Select floor zones. Remaining zones are radiators.",
+        "data": {
+          "floor": "Floor zones"
+        }
+      }
+    },
+    "error": {
+      "nine_zones": "Select nine distinct thermostats.",
+      "duplicate_sources": "Select distinct source entities.",
+      "floor_subset": "Choose entities from the previous step."
+    },
+    "abort": {
+      "already_configured": "Integration is already configured."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "advice": {
+        "name": "Boiler advice",
+        "state": {
+          "insufficient_data": "Insufficient data",
+          "no_demand": "No demand",
+          "running": "Boiler running",
+          "consider_heat": "Consider heating",
+          "recent_start_low_demand": "Low demand after recent start",
+          "low_demand": "Low demand"
+        }
+      }
+    }
+  }
+}
