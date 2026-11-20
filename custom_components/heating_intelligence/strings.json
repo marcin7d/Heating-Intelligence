@@ -41,5 +41,63 @@
     "abort": {
       "already_configured": "Already configured."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Edit Heating Intelligence",
+        "menu_options": {
+          "sources": "Heating zones and sensors",
+          "floor": "Underfloor heating zones",
+          "select_room": "Edit room profile"
+        }
+      },
+      "sources": {
+        "title": "Heating zones and sensors",
+        "data": {
+          "zones": "Heating zones",
+          "outdoor": "Outdoor temperature",
+          "supply": "Boiler supply temperature",
+          "return": "Boiler return temperature",
+          "boiler": "Boiler operation",
+          "mixed": "Mixed floor supply (optional)",
+          "irradiance": "Solar irradiance W/m² (optional)",
+          "illuminance": "Illuminance lux (optional)",
+          "pv_power": "PV power W (optional)"
+        }
+      },
+      "floor": {
+        "title": "Select floor heating zones",
+        "data": {
+          "floor": "Underfloor heating zones"
+        }
+      },
+      "select_room": {
+        "title": "Choose a room",
+        "data": {
+          "zone": "Room"
+        }
+      },
+      "room": {
+        "title": "Edit room: {zone}",
+        "data": {
+          "room_profile": "Room profile",
+          "windows": "Window directions",
+          "shading": "Shading (%)",
+          "oven_power": "Oven power W (optional for Kitchen)",
+          "hob_power": "Hob power W (optional for Kitchen)",
+          "hood": "Extractor hood (optional for Kitchen)",
+          "kitchen_humidity": "Kitchen humidity % (optional for Kitchen)"
+        }
+      }
+    },
+    "error": {
+      "invalid_zones": "Select at least one unique climate entity.",
+      "invalid_floor": "Select only configured thermostats.",
+      "invalid_zone": "Unknown zone.",
+      "missing_required_source": "Select all required sources.",
+      "invalid_shading": "Shading must be 0–100%.",
+      "invalid_profile": "Invalid room profile."
+    }
   }
 }

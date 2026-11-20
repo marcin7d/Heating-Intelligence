@@ -14,6 +14,7 @@ from .model import (HORIZONS, STEP, Model, boiler_cycles, demand,
                     heating_proxy, numeric, solar_signal, temp, train_with_diagnostics)
 from .kitchen import KitchenObservation, mark_disturbances, power_watts, humidity_percent
 from .control import simulate_system, demand_pending_minutes
+from .settings import effective_config, training_signature
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -283,7 +284,7 @@ class HeatingCoordinator(DataUpdateCoordinator):
         super().__init__(hass, _LOGGER, config_entry=entry, name='heating_intelligence',
                          update_interval=timedelta(minutes=5))
         self.entry = entry
-        self.config = dict(entry.data)
+        self.config = effective_config(entry.data, entry.options)
         self.store = HeatingModelStore(hass, 2, f'heating_intelligence.{entry.entry_id}')
         self.models = {}
         self.last_training = 0
@@ -291,14 +292,20 @@ class HeatingCoordinator(DataUpdateCoordinator):
 
     async def _async_setup(self):
         saved = await self.store.async_load() or {}
-        if saved.get('config') == self.config:
-            for zone, raw in saved.get('models', {}).items():
-                try:
-                    self.models[zone] = Model(**raw)
-                except (TypeError, ValueError):
-                    _LOGGER.warning('Ignoring invalid stored model for %s', zone)
-            self.last_training = saved.get('last_training', 0)
-            self.saved_diagnostics = saved.get('diagnostics', {})
+        previous = saved.get('config') or {}
+        for zone, raw in saved.get('models', {}).items():
+            if training_signature(previous, zone) is None or (
+                    training_signature(previous, zone) != training_signature(self.config, zone)):
+                continue
+            try:
+                self.models[zone] = Model(**raw)
+            except (TypeError, ValueError):
+                _LOGGER.warning('Ignoring invalid stored model for %s', zone)
+        self.saved_diagnostics = {
+            zone: diag for zone, diag in saved.get('diagnostics', {}).items()
+            if zone in self.models
+        }
+        self.last_training = saved.get('last_training', 0) if previous == self.config else 0
 
     async def _async_update_data(self):
         now_dt = dt.utcnow()

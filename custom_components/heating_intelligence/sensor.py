@@ -70,7 +70,7 @@ ZONE = [
 async def async_setup_entry(hass, entry, async_add_entities):
     coordinator = entry.runtime_data
     entities = [HeatingSensor(coordinator, entry.entry_id, key, label, unit) for key, label, unit in SYSTEM]
-    for zone in entry.data['zones']:
+    for zone in coordinator.config['zones']:
         state = hass.states.get(zone)
         name = state.name if state else zone
         entities.extend(HeatingSensor(coordinator, entry.entry_id, key, label, unit, zone, name)

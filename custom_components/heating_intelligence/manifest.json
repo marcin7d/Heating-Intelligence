@@ -1,7 +1,7 @@
 {
   "domain": "heating_intelligence",
   "name": "Heating Intelligence",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "config_flow": true,
   "dependencies": [
     "recorder",

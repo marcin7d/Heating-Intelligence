@@ -41,5 +41,63 @@
     "abort": {
       "already_configured": "Integracja jest już skonfigurowana."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Edycja Heating Intelligence",
+        "menu_options": {
+          "sources": "Termostaty i czujniki",
+          "floor": "Strefy podłogowe",
+          "select_room": "Profil pomieszczenia"
+        }
+      },
+      "sources": {
+        "title": "Termostaty i czujniki",
+        "data": {
+          "zones": "Termostaty (dowolna liczba)",
+          "outdoor": "Temperatura zewnętrzna",
+          "supply": "Zasilanie kotła",
+          "return": "Powrót kotła",
+          "boiler": "Stan pracy kotła",
+          "mixed": "Temperatura za mieszaczem (opcjonalnie)",
+          "irradiance": "Promieniowanie W/m² (opcjonalnie)",
+          "illuminance": "Oświetlenie lux (opcjonalnie)",
+          "pv_power": "Moc PV W (opcjonalnie)"
+        }
+      },
+      "floor": {
+        "title": "Wybierz strefy podłogowe",
+        "data": {
+          "floor": "Strefy podłogowe"
+        }
+      },
+      "select_room": {
+        "title": "Wybierz pomieszczenie",
+        "data": {
+          "zone": "Pomieszczenie"
+        }
+      },
+      "room": {
+        "title": "Zmień pomieszczenie: {zone}",
+        "data": {
+          "room_profile": "Profil pomieszczenia",
+          "windows": "Kierunki okien",
+          "shading": "Zacienienie (%)",
+          "oven_power": "Moc piekarnika W (kuchnia, opcjonalnie)",
+          "hob_power": "Moc płyty W (kuchnia, opcjonalnie)",
+          "hood": "Okap (kuchnia, opcjonalnie)",
+          "kitchen_humidity": "Wilgotność kuchni % (opcjonalnie)"
+        }
+      }
+    },
+    "error": {
+      "invalid_zones": "Wybierz co najmniej jeden unikalny termostat.",
+      "invalid_floor": "Wybierz strefy spośród skonfigurowanych termostatów.",
+      "invalid_zone": "Nieznane pomieszczenie.",
+      "missing_required_source": "Wybierz wszystkie wymagane źródła.",
+      "invalid_shading": "Zacienienie musi mieścić się w zakresie 0–100%.",
+      "invalid_profile": "Nieprawidłowy profil."
+    }
   }
 }
