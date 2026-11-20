@@ -1,7 +1,11 @@
-"""UI configuration for Heating Intelligence draft 0.2.0."""
+"""Initial setup and editable options for Heating Intelligence."""
 import voluptuous as vol
+from homeassistant.core import callback
 from homeassistant import config_entries
 from homeassistant.helpers.selector import EntitySelector, EntitySelectorConfig, SelectSelector, SelectSelectorConfig, SelectSelectorMode
+
+from .settings import (KITCHEN_INPUTS, WINDOW_AZIMUTHS, effective_config,
+                       update_floor, update_room, update_sources)
 
 DOMAIN = 'heating_intelligence'
 
@@ -12,6 +16,11 @@ def entity(domain, multiple=False):
 
 class HeatingIntelligenceFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 2
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        return HeatingOptionsFlow()
 
     async def async_step_user(self, user_input=None):
         errors = {}
@@ -89,3 +98,113 @@ class HeatingIntelligenceFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional('hood'): entity(['binary_sensor', 'switch']),
                 vol.Optional('kitchen_humidity'): entity('sensor'),
             }))
+
+
+class HeatingOptionsFlow(config_entries.OptionsFlowWithReload):
+    """Edit existing config without deleting the integration."""
+
+    def _current(self):
+        return effective_config(self.config_entry.data, self.config_entry.options)
+
+    async def async_step_init(self, user_input=None):
+        return self.async_show_menu(step_id="init",
+                                    menu_options=["sources", "floor", "select_room"])
+
+    async def async_step_sources(self, user_input=None):
+        current = self._current()
+        errors = {}
+        if user_input is not None:
+            try:
+                updated = update_sources(current, user_input)
+            except ValueError as exc:
+                errors["base"] = str(exc)
+            else:
+                return self.async_create_entry(data=updated)
+        schema = vol.Schema({
+            vol.Required("zones"): entity("climate", True),
+            vol.Required("outdoor"): entity("sensor"),
+            vol.Required("supply"): entity("sensor"),
+            vol.Required("return"): entity("sensor"),
+            vol.Required("boiler"): entity(["sensor", "binary_sensor", "switch"]),
+            vol.Optional("mixed"): entity("sensor"),
+            vol.Optional("irradiance"): entity("sensor"),
+            vol.Optional("illuminance"): entity("sensor"),
+            vol.Optional("pv_power"): entity("sensor"),
+        })
+        return self.async_show_form(
+            step_id="sources", errors=errors,
+            data_schema=self.add_suggested_values_to_schema(schema, current))
+
+    async def async_step_floor(self, user_input=None):
+        current = self._current()
+        errors = {}
+        if user_input is not None:
+            try:
+                updated = update_floor(current, user_input.get("floor", []))
+            except ValueError as exc:
+                errors["base"] = str(exc)
+            else:
+                return self.async_create_entry(data=updated)
+        schema = vol.Schema({
+            vol.Optional("floor"): EntitySelector(EntitySelectorConfig(
+                domain="climate", multiple=True,
+                include_entities=current["zones"]))
+        })
+        return self.async_show_form(
+            step_id="floor", errors=errors,
+            data_schema=self.add_suggested_values_to_schema(schema, current))
+
+    async def async_step_select_room(self, user_input=None):
+        current = self._current()
+        if user_input is not None:
+            self._zone = user_input["zone"]
+            if self._zone not in current["zones"]:
+                return self.async_show_form(
+                    step_id="select_room", errors={"base": "invalid_zone"},
+                    data_schema=self._room_selection_schema(current))
+            return await self.async_step_room()
+        return self.async_show_form(
+            step_id="select_room", data_schema=self._room_selection_schema(current))
+
+    def _room_selection_schema(self, current):
+        return vol.Schema({
+            vol.Required("zone"): SelectSelector(SelectSelectorConfig(
+                options=current["zones"], mode=SelectSelectorMode.DROPDOWN))
+        })
+
+    async def async_step_room(self, user_input=None):
+        current = self._current()
+        zone = self._zone
+        errors = {}
+        if user_input is not None:
+            try:
+                updated = update_room(current, zone, user_input)
+            except ValueError as exc:
+                errors["base"] = str(exc)
+            else:
+                return self.async_create_entry(data=updated)
+        orientation = current.get("orientations", {}).get(zone, {})
+        profile = current.get("profiles", {}).get(zone, {})
+        azimuths = orientation.get("azimuths", [])
+        windows = [name for name, azimuth in WINDOW_AZIMUTHS.items()
+                   if azimuth in azimuths] or ["none"]
+        defaults = {"room_profile": profile.get("type", "standard"),
+                    "windows": windows,
+                    "shading": round(orientation.get("shading", 0) * 100),
+                    **{key: profile[key] for key in KITCHEN_INPUTS if profile.get(key)}}
+        schema = vol.Schema({
+            vol.Optional("room_profile"): SelectSelector(SelectSelectorConfig(
+                options=["standard", "kitchen"], mode=SelectSelectorMode.DROPDOWN)),
+            vol.Optional("windows"): SelectSelector(SelectSelectorConfig(
+                options=["none", "north", "east", "south", "west"],
+                multiple=True, mode=SelectSelectorMode.DROPDOWN)),
+            vol.Optional("shading"): vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
+            vol.Optional("oven_power"): entity("sensor"),
+            vol.Optional("hob_power"): entity("sensor"),
+            vol.Optional("hood"): entity(["binary_sensor", "switch"]),
+            vol.Optional("kitchen_humidity"): entity("sensor"),
+        })
+        return self.async_show_form(
+            step_id="room", description_placeholders={"zone": zone},
+            errors=errors,
+            data_schema=self.add_suggested_values_to_schema(schema, defaults))
