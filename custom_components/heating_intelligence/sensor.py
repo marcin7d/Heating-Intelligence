@@ -11,6 +11,17 @@ SYSTEM = [
     ('history', 'Recorder history', None),
     ('demand', 'Heat demand index', None),
     ('advice', 'Boiler advice', None),
+    ('boiler_simulation_status', 'Boiler forecast status', None),
+    ('boiler_demand_zones', 'Zones requesting heat now', None),
+    ('boiler_start_pending_minutes', 'Boiler start demand duration', 'min'),
+    ('boiler_forecast_30', 'Boiler state in 30 min', None),
+    ('boiler_forecast_60', 'Boiler state in 60 min', None),
+    ('boiler_forecast_120', 'Boiler state in 120 min', None),
+    ('boiler_forecast_360', 'Boiler state in 360 min', None),
+    ('boiler_demand_30', 'Zones requesting heat in 30 min', None),
+    ('boiler_demand_60', 'Zones requesting heat in 60 min', None),
+    ('boiler_demand_120', 'Zones requesting heat in 120 min', None),
+    ('boiler_demand_360', 'Zones requesting heat in 360 min', None),
 ]
 ZONE = [
     ('t_30', 'Temperature in 30 min', '°C'),

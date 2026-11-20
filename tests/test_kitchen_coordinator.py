@@ -83,7 +83,8 @@ class CoordinatorKitchenTests(unittest.TestCase):
     def test_kitchen_event_withholds_only_kitchen_forecast(self):
         models = {
             zone: m.Model(memory=0, loss=.01, gain=.2, solar_gain=0, bias=0,
-                          error=.01, baseline=.03, samples=250)
+                          error=.01, baseline=.03, samples=250,
+                          qualified_horizons=(30, 60, 120, 360))
             for zone in CONFIG['zones']
         }
         output, unchanged = c.compute(CONFIG, {}, live_states(), 9_000_000, 8_900_000, models,
@@ -114,7 +115,8 @@ class CoordinatorKitchenTests(unittest.TestCase):
 
     def test_kitchen_idle_does_not_block_regular_prediction(self):
         model = m.Model(memory=0, loss=.01, gain=.2, solar_gain=0, bias=0,
-                        error=.01, baseline=.03, samples=250)
+                        error=.01, baseline=.03, samples=250,
+                        qualified_horizons=(30, 60, 120, 360))
         out, _ = c.compute(CONFIG, {}, live_states(oven=0), 9_000_000, 8_900_000,
                            {'climate.kitchen': model}, training=False)
         kitchen = out['zones']['climate.kitchen']

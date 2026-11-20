@@ -10,9 +10,10 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt
 
-from .model import (HORIZONS, STEP, Model, boiler_cycles, demand, forecast,
+from .model import (HORIZONS, STEP, Model, boiler_cycles, demand,
                     heating_proxy, numeric, solar_signal, temp, train_with_diagnostics)
 from .kitchen import KitchenObservation, mark_disturbances, power_watts, humidity_percent
+from .control import simulate_system, demand_pending_minutes
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -94,6 +95,7 @@ def compute(config, histories, live, now, midnight, trained_models, training, sa
     rows = {zone: [] for zone in config['zones']}
     solar_sources = {}
     kitchen_observations = {zone: [] for zone in config['zones']}
+    demand_history = []
     initial = stamp - (7 * 86400 if training else 6 * 3600)
     for point in range(initial, stamp + STEP, STEP):
         if point == stamp:
@@ -115,11 +117,13 @@ def compute(config, histories, live, now, midnight, trained_models, training, sa
         irradiance = read_numeric(states.get(config.get('irradiance')))
         lux = read_numeric(states.get(config.get('illuminance')))
         pv = read_numeric(states.get(config.get('pv_power')))
+        point_requests = []
         for zone, kind in kinds.items():
             st = states.get(zone)
             t = state_value(st, attr='current_temperature')
             setpoint = state_value(st, attr='temperature')
             call = request(st, t, setpoint)
+            point_requests.append(call)
             power = heating_proxy(kind, call, boiler, t, supply, mixed)
             orientation = config.get('orientations', {}).get(zone, {})
             solar, source = solar_signal(irradiance, lux, pv, sun_az, sun_el,
@@ -135,6 +139,8 @@ def compute(config, histories, live, now, midnight, trained_models, training, sa
                     point, t, power, solar, oven, hob, hood, humidity))
             if point == stamp:
                 solar_sources[zone] = source
+        demand_history.append((point, sum(point_requests) if all(
+            value is not None for value in point_requests) else None))
 
     diagnostics = {}
     kitchen_info = {}
@@ -171,6 +177,7 @@ def compute(config, histories, live, now, midnight, trained_models, training, sa
     all_boiler_events = [(t, boiler_value(st)) for t, st in events[config['boiler']] if t <= now]
     result.update(boiler_cycles(all_boiler_events, midnight, now))
     demand_rows = []
+    zone_inputs = {}
     for zone, kind in kinds.items():
         points = rows[zone]
         _, room, outside, power, solar = points[-1]
@@ -183,17 +190,33 @@ def compute(config, histories, live, now, midnight, trained_models, training, sa
         recent = [p[3] for p in points[-144:-1] if p[3] is not None and p[3] > .25]
         if recent and not (kind == 'floor' and not config.get('mixed')):
             active_power = median(recent)
+        internal = kitchen_info[zone]
         model = trained_models.get(zone)
-        predictions, lead = forecast(model, points, outside, power, solar, target, active_power)
+        zone_inputs[zone] = {
+            'room': room, 'outside': outside, 'solar': solar, 'rows': points,
+            'requested': call, 'target': target, 'active_power': active_power,
+            'model': model if internal['state'] not in ('active', 'cooldown') else None,
+        }
+    pending = demand_pending_minutes(demand_history, boiler)
+    simulated = simulate_system(zone_inputs, boiler, pending)
+    result.update({
+        'boiler_simulation_status': simulated['status'],
+        'boiler_demand_zones': simulated['current_demand'],
+        'boiler_start_pending_minutes': pending if boiler is False else 0,
+        **{f'boiler_forecast_{h}': simulated['boiler'].get(h) for h in HORIZONS},
+        **{f'boiler_demand_{h}': simulated['demand'].get(h) for h in HORIZONS},
+    })
+    for zone, kind in kinds.items():
+        points = rows[zone]
+        _, room, outside, power, solar = points[-1]
+        model = trained_models.get(zone)
+        predictions = simulated['temperatures'].get(zone, {})
+        lead = simulated['lead'].get(zone)
         diag = diagnostics.get(zone, saved_diagnostics.get(zone, {
             'status': 'ready' if model else 'not_trained',
             'samples': model.samples if model else 0,
         }))
         internal = kitchen_info[zone]
-        if internal['state'] in ('active', 'cooldown'):
-            # The model does not predict residual appliance/cooking heat.
-            # Keep a learned model but withhold unreliable live predictions.
-            predictions, lead = {}, None
         result['zones'][zone] = {
             **{f't_{h}': predictions.get(h) for h in HORIZONS},
             'lead': lead,

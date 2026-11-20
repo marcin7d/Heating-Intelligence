@@ -1,4 +1,4 @@
-# Heating Intelligence 0.2.1 — wersja robocza
+# Heating Intelligence 0.4.0 — wersja rozwojowa
 
 **WERSJA ROZWOJOWA.** Rozwojowa wersja integracji Home Assistant 2026.11 — wyłącznie monitorowanie i predykcja. Nie wykonuje żadnych komend do kotła, mieszacza ani termostatów.
 
@@ -79,3 +79,33 @@ Trening ponawia się co godzinę, dopóki choć jedna skonfigurowana strefa nie 
 ## Migracja z 0.1.1
 
 W 0.2.1 dodano migrację wpisu konfiguracji z wersji 1 do 2, zachowując wybrane termostaty i źródła pomiarowe. Stare współczynniki zapisanych modeli są niezgodne z 0.2.x, więc zostają wyzerowane i wyuczone ponownie. Nowe opcje słońca i profilu Kuchnia dla istniejącego wpisu nie są ustawiane automatycznie; do ich edycji potrzebny będzie osobny mechanizm opcji. Po aktualizacji przez Marketplace/HACS uruchom ponownie Home Assistant Core.
+
+## 0.4.0 — współdzielony model sterowania kotłem
+
+Prognoza temperatury nie zakłada już stałej pracy kotła przez 30–360 minut.
+Wszystkie skonfigurowane strefy uczestniczą we wspólnej symulacji co 5 minut:
+
+- **Start**: co najmniej 3 termostaty żądają grzania przez 5 minut.
+- **Stop**: mniej niż 3 termostaty żądają grzania; bez opóźnienia.
+- Termostaty w symulacji wyłączają żądanie po osiągnięciu nastawy i ponownie je
+  włączają przy temperaturze o 0,3°C niższej od nastawy (założenie symulacyjne,
+  które może się różnić od histerezy prawdziwego termostatu).
+- Zmiana stanu kotła wpływa na dopływ ciepła we wszystkich strefach; ciepło
+  wcześniej zgromadzone w grzejniku może dalej oddziaływać przez `memory`.
+- Przy braku wyuczonego modelu strefa nadal jest liczona do zapotrzebowania,
+  ale jej temperatura jest przyjmowana jako stała; stan prognozy:
+  `partial_untrained_zones`.
+- Wszystkie prognozy są **warunkowe**: zakładają niezmienne nastawy termostatów,
+  temperaturę zewnętrzną, nasłonecznienie i przybliżoną moc grzewczą podczas
+  przyszłej pracy kotła. Nie sterują kotłem ani termostatami.
+
+Nowe encje systemowe: `Boiler forecast status`, `Zones requesting heat now`,
+`Boiler start demand duration`, `Boiler state in 30/60/120/360 min`,
+`Zones requesting heat in 30/60/120/360 min`.
+
+**Ważne ograniczenie walidacji**: istniejące metryki MAE 30–360 min i warunki
+kwalifikacji modelu dotyczą poprzedniej walidacji strefowej ze stałym stanem
+grzania, a nie walidacji całego współdzielonego symulatora. Prognozy sprzężone
+wymagają odrębnego backtestu na rzeczywistych danych, przed traktowaniem ich
+jako zweryfikowanych. Strefy bez kwalifikowanego modelu nie uzyskują automatycznie
+prognozy temperatury od samego dodania reguły kotła.
