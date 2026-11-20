@@ -8,7 +8,7 @@ KITCHEN_INPUTS = ("oven_power", "hob_power", "hood", "kitchen_humidity")
 
 def effective_config(entry_data, entry_options):
     """Stored options represent a complete editable configuration."""
-    return {**dict(entry_data), **dict(entry_options)}
+    return dict(entry_options) if entry_options else dict(entry_data)
 
 
 def update_sources(current, submitted):
